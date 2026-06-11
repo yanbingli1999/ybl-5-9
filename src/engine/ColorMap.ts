@@ -22,6 +22,23 @@ export const HEAT_MAP_STOPS_RAINBOW: ColorStop[] = [
   { position: 1.0, r: 255, g: 0, b: 0 },
 ];
 
+export const DIFFERENCE_MAP_STOPS: ColorStop[] = [
+  { position: 0.0, r: 37, g: 99, b: 235 },
+  { position: 0.25, r: 96, g: 165, b: 250 },
+  { position: 0.5, r: 148, g: 163, b: 184 },
+  { position: 0.75, r: 251, g: 146, b: 60 },
+  { position: 1.0, r: 239, g: 68, b: 68 },
+];
+
+export function differenceToColor(
+  difference: number,
+  maxAbsValue: number = 50
+): string {
+  const normalized = Math.max(0, Math.min(1, (difference + maxAbsValue) / (2 * maxAbsValue)));
+  const { r, g, b } = interpolateColor(normalized * 100, 0, 100, DIFFERENCE_MAP_STOPS);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 export function interpolateColor(
   value: number,
   minValue: number,
@@ -117,6 +134,36 @@ export function drawColorBar(
       const t = 1 - i / height;
       const temp = minTemp + t * (maxTemp - minTemp);
       ctx.fillStyle = temperatureToColor(temp, minTemp, maxTemp, stops);
+      ctx.fillRect(x, y + i, width, 1);
+    }
+  }
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x, y, width, height);
+}
+
+export function drawDifferenceColorBar(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  maxAbsValue: number = 50,
+  horizontal: boolean = true
+): void {
+  if (horizontal) {
+    for (let i = 0; i < width; i++) {
+      const t = i / width;
+      const diff = -maxAbsValue + t * 2 * maxAbsValue;
+      ctx.fillStyle = differenceToColor(diff, maxAbsValue);
+      ctx.fillRect(x + i, y, 1, height);
+    }
+  } else {
+    for (let i = 0; i < height; i++) {
+      const t = 1 - i / height;
+      const diff = -maxAbsValue + t * 2 * maxAbsValue;
+      ctx.fillStyle = differenceToColor(diff, maxAbsValue);
       ctx.fillRect(x, y + i, width, 1);
     }
   }

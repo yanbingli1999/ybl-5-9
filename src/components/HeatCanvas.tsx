@@ -2,6 +2,7 @@ import React, { useRef, useCallback, useEffect } from 'react';
 import useSimulationStore from '../store/useSimulationStore';
 import useSimulation from '../hooks/useSimulation';
 import useHeatRenderer from '../hooks/useHeatRenderer';
+import useContrastHeatRenderer from '../hooks/useContrastHeatRenderer';
 
 export const HeatCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -17,6 +18,8 @@ export const HeatCanvas: React.FC = () => {
     setCurrentTemperature,
     addHeatSource,
     mode,
+    isContrastMode,
+    contrastResult,
   } = useSimulationStore();
 
   const { getEngine, initEngine, isRunning } = useSimulation();
@@ -25,6 +28,21 @@ export const HeatCanvas: React.FC = () => {
     showCellValues: true,
     showColorBar: true,
   });
+  const { render: renderContrast } = useContrastHeatRenderer(canvasRef, {
+    showGrid: true,
+    showCellValues: true,
+    showColorBar: true,
+    showHighlight: true,
+    showDiffusionArrow: true,
+  });
+
+  useEffect(() => {
+    if (isContrastMode && contrastResult) {
+      renderContrast();
+    } else {
+      render();
+    }
+  }, [isContrastMode, contrastResult, render, renderContrast]);
 
   const getGridCoordinates = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -66,14 +84,14 @@ export const HeatCanvas: React.FC = () => {
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
-      if (mode === 'running') return;
+      if (mode === 'running' || isContrastMode) return;
       isDrawingRef.current = true;
       const coords = getGridCoordinates(e);
       if (coords) {
         drawAtPosition(coords.x, coords.y);
       }
     },
-    [mode, getGridCoordinates, drawAtPosition]
+    [mode, isContrastMode, getGridCoordinates, drawAtPosition]
   );
 
   const handleMouseMove = useCallback(
@@ -81,11 +99,11 @@ export const HeatCanvas: React.FC = () => {
       const coords = getGridCoordinates(e);
       setHoveredCell(coords);
 
-      if (isDrawingRef.current && coords && !isRunning) {
+      if (isDrawingRef.current && coords && !isRunning && !isContrastMode) {
         drawAtPosition(coords.x, coords.y);
       }
     },
-    [getGridCoordinates, setHoveredCell, isRunning, drawAtPosition]
+    [getGridCoordinates, setHoveredCell, isRunning, isContrastMode, drawAtPosition]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -96,10 +114,6 @@ export const HeatCanvas: React.FC = () => {
     isDrawingRef.current = false;
     setHoveredCell(null);
   }, [setHoveredCell]);
-
-  useEffect(() => {
-    render();
-  }, [render]);
 
   useEffect(() => {
     if (grid.width && grid.height) {
@@ -126,7 +140,7 @@ export const HeatCanvas: React.FC = () => {
           ref={canvasRef}
           width={canvasWidth}
           height={canvasHeight}
-          className="cursor-crosshair shadow-2xl shadow-black/50 rounded-lg"
+          className={`${isContrastMode ? 'cursor-default' : 'cursor-crosshair'} shadow-2xl shadow-black/50 rounded-lg`}
           style={{
             maxWidth: '100%',
             maxHeight: 'calc(100vh - 200px)',
@@ -143,9 +157,20 @@ export const HeatCanvas: React.FC = () => {
             模拟运行中
           </div>
         )}
-        {drawMode !== 'none' && !isRunning && (
+        {isContrastMode && (
+          <div className="absolute top-4 left-4 bg-purple-500/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-white text-xs font-medium flex items-center gap-2">
+            <span className="w-2 h-2 bg-white rounded-full" />
+            对比模式
+          </div>
+        )}
+        {drawMode !== 'none' && !isRunning && !isContrastMode && (
           <div className="absolute top-4 right-4 bg-slate-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-slate-200 text-xs font-medium">
             {drawMode === 'heat' ? '🔥 点击添加热源' : '❄️ 点击冷却区域'}
+          </div>
+        )}
+        {isContrastMode && contrastResult && (
+          <div className="absolute top-4 right-4 bg-purple-800/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-slate-200 text-xs font-medium">
+            📊 差值热图
           </div>
         )}
       </div>

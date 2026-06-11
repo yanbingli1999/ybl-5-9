@@ -55,4 +55,35 @@ export interface ExperimentResult {
   completedAt: number;
 }
 
+export interface HeatZone {
+  x: number;
+  y: number;
+  temperature: number;
+  radius: number;
+}
+
+export interface ContrastResult {
+  differenceData: number[][];
+  peakChange: number;
+  averageChange: number;
+  maxIncrease: { x: number; y: number; value: number };
+  maxDecrease: { x: number; y: number; value: number };
+  heatZones: HeatZone[];
+  diffusionDirection: { dx: number; dy: number; magnitude: number };
+  highlightedCells: { x: number; y: number; difference: number }[];
+}
+
+export interface ContrastAnalysis {
+  id: string;
+  experimentId: string;
+  snapshotAId: string;
+  snapshotBId: string;
+  snapshotAName?: string;
+  snapshotBName?: string;
+  threshold: number;
+  result: ContrastResult;
+  createdAt: number;
+  name?: string;
+}
+
 export type SimulationMode = 'idle' | 'running' | 'paused' | 'finished';

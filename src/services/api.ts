@@ -3,6 +3,7 @@ import type {
   ExperimentConfig,
   TemperatureSnapshot,
   ExperimentResult,
+  ContrastAnalysis,
 } from '@shared/types';
 
 interface ApiResponse<T> {
@@ -95,11 +96,26 @@ export const favoritesApi = {
     }),
 };
 
+export const analysisApi = {
+  getByExperiment: (experimentId: string) =>
+    request<ContrastAnalysis[]>(`/analysis/${experimentId}`),
+  create: (analysis: ContrastAnalysis) =>
+    request<ContrastAnalysis>('/analysis', {
+      method: 'POST',
+      body: JSON.stringify(analysis),
+    }),
+  delete: (id: string) =>
+    request<void>(`/analysis/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
 export const api = {
   materials: materialsApi,
   experiments: experimentsApi,
   snapshots: snapshotsApi,
   favorites: favoritesApi,
+  analysis: analysisApi,
 };
 
 export default api;

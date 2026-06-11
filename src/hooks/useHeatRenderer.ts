@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { temperatureToColor, drawColorBar } from '../engine/ColorMap';
 import useSimulationStore from '../store/useSimulationStore';
 

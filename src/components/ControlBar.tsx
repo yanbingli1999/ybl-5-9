@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, RotateCcw, SkipForward, Save, Camera } from 'lucide-react';
+import { Play, Pause, RotateCcw, SkipForward, Save, Camera, ArrowRightLeft } from 'lucide-react';
 import useSimulationStore from '../store/useSimulationStore';
 import useSimulation from '../hooks/useSimulation';
 import api from '../services/api';
@@ -12,6 +12,9 @@ export const ControlBar: React.FC = () => {
     currentTemperature,
     currentExperimentId,
     addSnapshot,
+    isContrastMode,
+    setContrastMode,
+    clearContrastSelection,
   } = useSimulationStore();
 
   const { play, pause, reset, stepForward, isRunning, isPaused, isFinished, isIdle } = useSimulation();
@@ -77,7 +80,12 @@ export const ControlBar: React.FC = () => {
           {isIdle || isPaused || isFinished ? (
             <button
               onClick={play}
-              className="w-12 h-12 flex items-center justify-center bg-green-500 hover:bg-green-400 text-white rounded-xl transition-all hover:scale-105 shadow-lg shadow-green-500/30"
+              disabled={isContrastMode}
+              className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all hover:scale-105 ${
+                isContrastMode
+                  ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                  : 'bg-green-500 hover:bg-green-400 text-white shadow-lg shadow-green-500/30'
+              }`}
               title="播放"
             >
               <Play className="w-5 h-5 ml-0.5" />
@@ -85,7 +93,12 @@ export const ControlBar: React.FC = () => {
           ) : (
             <button
               onClick={pause}
-              className="w-12 h-12 flex items-center justify-center bg-yellow-500 hover:bg-yellow-400 text-white rounded-xl transition-all hover:scale-105 shadow-lg shadow-yellow-500/30"
+              disabled={isContrastMode}
+              className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all hover:scale-105 ${
+                isContrastMode
+                  ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                  : 'bg-yellow-500 hover:bg-yellow-400 text-white shadow-lg shadow-yellow-500/30'
+              }`}
               title="暂停"
             >
               <Pause className="w-5 h-5" />
@@ -94,7 +107,7 @@ export const ControlBar: React.FC = () => {
           
           <button
             onClick={stepForward}
-            disabled={isRunning}
+            disabled={isRunning || isContrastMode}
             className="w-12 h-12 flex items-center justify-center bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl transition-all hover:scale-105"
             title="单步执行"
           >
@@ -103,7 +116,12 @@ export const ControlBar: React.FC = () => {
           
           <button
             onClick={reset}
-            className="w-12 h-12 flex items-center justify-center bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all hover:scale-105"
+            disabled={isContrastMode}
+            className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all hover:scale-105 ${
+              isContrastMode
+                ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                : 'bg-slate-700 hover:bg-slate-600 text-white'
+            }`}
             title="重置"
           >
             <RotateCcw className="w-5 h-5" />
@@ -113,17 +131,43 @@ export const ControlBar: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={handleSaveSnapshot}
-            className="flex items-center gap-2 px-4 py-2.5 bg-purple-500/90 hover:bg-purple-500 text-white rounded-xl transition-all hover:scale-105 shadow-lg shadow-purple-500/20 text-sm font-medium"
+            disabled={isContrastMode}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all hover:scale-105 text-sm font-medium ${
+              isContrastMode
+                ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                : 'bg-purple-500/90 hover:bg-purple-500 text-white shadow-lg shadow-purple-500/20'
+            }`}
           >
             <Camera className="w-4 h-4" />
             保存快照
           </button>
           <button
             onClick={handleSaveExperiment}
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-500/90 hover:bg-blue-500 text-white rounded-xl transition-all hover:scale-105 shadow-lg shadow-blue-500/20 text-sm font-medium"
+            disabled={isContrastMode}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all hover:scale-105 text-sm font-medium ${
+              isContrastMode
+                ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                : 'bg-blue-500/90 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20'
+            }`}
           >
             <Save className="w-4 h-4" />
             保存实验
+          </button>
+          <button
+            onClick={() => {
+              if (isContrastMode) {
+                clearContrastSelection();
+              }
+              setContrastMode(!isContrastMode);
+            }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all hover:scale-105 text-sm font-medium ${
+              isContrastMode
+                ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+                : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+            }`}
+          >
+            <ArrowRightLeft className="w-4 h-4" />
+            {isContrastMode ? '退出对比' : '对比模式'}
           </button>
         </div>
       </div>
