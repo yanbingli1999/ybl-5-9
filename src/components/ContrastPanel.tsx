@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -8,11 +8,15 @@ import {
   FileText,
   RefreshCw,
   AlertTriangle,
-  MapPin
+  MapPin,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import useSimulationStore from '../store/useSimulationStore';
 import api from '../services/api';
 import type { ContrastAnalysis } from '@shared/types';
+
+type ToastType = 'success' | 'error' | null;
 
 export const ContrastPanel: React.FC = () => {
   const {
@@ -28,11 +32,22 @@ export const ContrastPanel: React.FC = () => {
 
   const [saving, setSaving] = useState(false);
   const [analysisName, setAnalysisName] = useState('');
+  const [toast, setToast] = useState<{ type: ToastType; message: string }>({ type: null, message: '' });
+
+  useEffect(() => {
+    if (toast.type) {
+      const timer = setTimeout(() => setToast({ type: null, message: '' }), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const generateId = () => `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   const handleSaveAnalysis = async () => {
-    if (!contrastResult || !selectedSnapshotA || !selectedSnapshotB || !currentExperimentId) return;
+    if (!contrastResult || !selectedSnapshotA || !selectedSnapshotB || !currentExperimentId) {
+      setToast({ type: 'error', message: '缺少必要信息，无法保存分析记录' });
+      return;
+    }
 
     const analysis: ContrastAnalysis = {
       id: generateId(),
@@ -52,7 +67,10 @@ export const ContrastPanel: React.FC = () => {
       await api.analysis.create(analysis);
       addAnalysisRecord(analysis);
       setAnalysisName('');
+      setToast({ type: 'success', message: `分析记录"${analysis.name}"已保存` });
     } catch (error) {
+      const msg = error instanceof Error ? error.message : '未知错误';
+      setToast({ type: 'error', message: `保存失败: ${msg}` });
       console.error('保存分析记录失败:', error);
     } finally {
       setSaving(false);
@@ -105,7 +123,21 @@ export const ContrastPanel: React.FC = () => {
   };
 
   return (
-    <div className="bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 px-6 py-4">
+    <div className="bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 px-6 py-4 relative">
+      {toast.type && (
+        <div className={`absolute -top-12 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm font-medium animate-bounce z-50 ${
+          toast.type === 'success'
+            ? 'bg-green-500 text-white'
+            : 'bg-red-500 text-white'
+        }`}>
+          {toast.type === 'success' ? (
+            <CheckCircle className="w-4 h-4" />
+          ) : (
+            <XCircle className="w-4 h-4" />
+          )}
+          {toast.message}
+        </div>
+      )}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
